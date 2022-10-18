@@ -99,7 +99,7 @@ So, the global should look like this:
 ^try.PointD(id) = %%CLASSNAME, X, Y
 ```
 
-## (c). Have a look at the data
+## (c). Have a look at the data
 
 We still have no data. 
 
