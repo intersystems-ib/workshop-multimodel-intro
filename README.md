@@ -21,7 +21,7 @@ docker-compose up -d
 
 # Examples
 
-## (a). Create a table / persistent class
+## (a). Create a table / persistent class
 
 Let's create a new persistent class using VS Code:
 
