@@ -140,7 +140,7 @@ The global will look like this:
 zw ^try.PointD
 ^try.PointD=2
 ^try.PointD(1)=$lb("",1,2)
-^try.PointD(2)=$lb("",3,4
+^try.PointD(2)=$lb("",3,4)
 ```
 
 Let's delete all the data from the table:
