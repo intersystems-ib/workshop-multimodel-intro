@@ -4,6 +4,9 @@
     set $namespace = "%SYS"
     Do ##class(Security.Users).UnExpireUserPasswords("*")
 
+    // install zpm
+    set r=##class(%Net.HttpRequest).%New(),r.Server="pm.community.intersystems.com",r.SSLConfiguration="ISC.FeatureTracker.SSL.Config" d r.Get("/packages/zpm/latest/installer"),$system.OBJ.LoadStream(r.HttpResponse.Data,"c")
+
     // load source
     set $namespace = "USER"
     set sc = $SYSTEM.OBJ.LoadDir("/opt/irisapp/src", "ck", .errorlog, 1)
