@@ -11,12 +11,12 @@ Intro to basic concepts about multi-model database using InterSystems IRIS. You 
 # Setup
 Build the container
 ```
-docker-compose build
+docker compose build
 ```
 
 Run the container we will use as our IRIS instance:
 ```
-docker-compose up -d
+docker compose up -d
 ```
 
 # Examples
@@ -169,3 +169,12 @@ It will destroy the table, the class and delete the global:
 zw ^try.PointD
 ```
 
+## Some other example
+
+Now have a look at the class [sample.Person](src/sample/Person.cls) class. Can you still find the properties and the storage definition?
+
+Try executing the included sample method by:
+
+```objectscript
+do ##class(sample.Person).RunSample()
+```
