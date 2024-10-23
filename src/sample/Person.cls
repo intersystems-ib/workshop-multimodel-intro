@@ -5,7 +5,7 @@ Class sample.Person Extends (%Persistent, %XML.Adaptor, %JSON.Adaptor)
 Property Name As %String;
 
 /// Last name
-Property LastName As %String;
+Property LastName As %String(%JSONFIELDNAME = "last");
 
 /// Birth date
 Property BirthDate As %Date;
@@ -13,10 +13,24 @@ Property BirthDate As %Date;
 /// Sex
 Property AdministrativeSex As %String(VALUELIST = ",M,F");
 
+/// Address
+Property Company As Company(%JSONREFERENCE = "ID");
+
+ForeignKey FKCompany(Company) References Company();
+
 /// Sample method that exports as JSON and XML an object
 /// call it using: do ##class(sample.Person).RunSample()
 ClassMethod RunSample()
 {
+    // company
+    set company = ##class(sample.Company).CodeIdxOpen("ACME")
+    if '$isobject(company) {
+        set company = ##class(sample.Company).%New()
+        set company.Code = "ACME"
+        set company.Name = "A.C.M.E. Corp."
+        set company.Description = "A cool company called ACME"
+    }
+    
     // create new object
     set person = ##class(sample.Person).%New()
     
@@ -24,6 +38,7 @@ ClassMethod RunSample()
     set person.Name = "Joe"
     set person.LastName = "Burrow"
     set person.BirthDate = $zdateh("1996-12-10", 3)
+    set person.Company = company
 
     // save object
     do person.%Save()
@@ -60,6 +75,12 @@ Storage Default
 </Value>
 <Value name="5">
 <Value>AdministrativeSex</Value>
+</Value>
+<Value name="6">
+<Value>Address</Value>
+</Value>
+<Value name="7">
+<Value>Company</Value>
 </Value>
 </Data>
 <DataLocation>^sample.PersonD</DataLocation>

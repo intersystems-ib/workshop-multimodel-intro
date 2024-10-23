@@ -9,27 +9,26 @@ Intro to basic concepts about multi-model database using InterSystems IRIS. You 
 * [Visual Studio Code](https://code.visualstudio.com/download) + [InterSystems ObjectScript VSCode Extension](https://marketplace.visualstudio.com/items?itemName=daimor.vscode-objectscript)
 
 # Setup
-Build the container
-```
+Build the image & run the container
+```bash
 docker compose build
-```
-
-Run the container we will use as our IRIS instance:
-```
 docker compose up -d
 ```
 
 # Examples
 
-## (a). Create a table / persistent class
+## Create a table / persistent class
 
 Let's create a new persistent class using VS Code:
 
 ```objectscript
-Class try.Point Extends %Persistent [DDLAllowed]
+Class game.Player Extends %Persistent [DDLAllowed]
 {
-    Property X;
-    Property Y;
+    Property Name As %String(MAXLEN = 255);
+
+    Property Alias As %String(MAXLEN = 50);
+
+    Property Score As %Numeric;
 }
 ```
 
@@ -37,16 +36,16 @@ This persistent class in InterSystems IRIS is also a table.
 
 You could also create the same class using DDL / SQL:
 ```sql
-CREATE Table try.Point (
-    X VARCHAR(50),
-    Y VARCHAR(50)
+CREATE Table sample.Player (
+    Name VARCHAR(255),
+    Alias VARCHAR(50),
+    Score NUMERIC
 )
 ```
 
+## Storage definition
 
-## (b). Storage
-
-After compilation, the class would have generated a storage structure, as a persistent class in InterSystems IRIS is also a table.
+After compiling your class in VS Code, it will generate a storage definition. This is automatically done by InterSystems IRIS to handle the persistence of the data.
 
 Pay attention to:
 * Type: generated storage type, in our case the default storage for persistent objects
@@ -57,49 +56,55 @@ Pay attention to:
 * **DataLocation** - global in which to store data
 
 ```objectscript
-Class try.Point Extends %Persistent [ DdlAllowed ]
+Class game.Player Extends %Persistent [ DdlAllowed ]
 {
 
-Property X;
+Property Name As %String(MAXLEN = 255);
 
-Property Y;
+Property Alias As %String(MAXLEN = 50);
+
+Property Score As %Numeric;
 
 Storage Default
 {
-<Data name="PointDefaultData">
+<Data name="PlayerDefaultData">
 <Value name="1">
 <Value>%%CLASSNAME</Value>
 </Value>
 <Value name="2">
-<Value>X</Value>
+<Value>Name</Value>
 </Value>
 <Value name="3">
-<Value>Y</Value>
+<Value>Alias</Value>
+</Value>
+<Value name="4">
+<Value>Score</Value>
 </Value>
 </Data>
-<DataLocation>^try.PointD</DataLocation>
-<DefaultData>PointDefaultData</DefaultData>
-<IdLocation>^try.PointD</IdLocation>
-<IndexLocation>^try.PointI</IndexLocation>
-<StreamLocation>^try.PointS</StreamLocation>
+<DataLocation>^game.PlayerD</DataLocation>
+<DefaultData>PlayerDefaultData</DefaultData>
+<IdLocation>^game.PlayerD</IdLocation>
+<IndexLocation>^game.PlayerI</IndexLocation>
+<StreamLocation>^game.PlayerS</StreamLocation>
 <Type>%Storage.Persistent</Type>
 }
 
 }
 ```
 
-*DefaultData* is `PointDefaultData`, it means that the global node has this structure:
+*DefaultData* is `PlayerDefaultData`, it means that the global node has this structure:
 * 1 - %%CLASSNAME
-* 2 - X
-* 3 - Y
+* 2 - Name
+* 3 - Alias
+* 4 - Score
 
 
 So, the global should look like this:
 ```objectscript
-^try.PointD(id) = %%CLASSNAME, X, Y
+^game.PlayerD(id) = %%CLASSNAME, Name, Alias, Score
 ```
 
-## (c). Have a look at the data
+## Have a look at the data
 
 We still have no data. 
 
@@ -107,52 +112,60 @@ Open a [WebTerminal](http://localhost:52773/terminal/) session.
 
 Let's add one object:
 ```objectscript
-set p = ##class(try.Point).%New()
-set p.X = 1
-set p.Y = 2
+set p = ##class(game.Player).%New()
+set p.Name = "My Player"
+set p.Alias = "kraken"
+set p.Score = 1377
 write p.%Save()
 ```
 
 You can have a look at the data using SQL in [SQL Explorer](http://localhost:52773/csp/sys/exp/%25CSP.UI.Portal.SQL.Home.zen?$NAMESPACE=USER) or even using an external client through JDBC like *SQLTools* for VS Code.
 
-```
-select * from try.point
+```sql
+select * from game.Player
 ```
 
 Now, you can display the global in [WebTerminal](http://localhost:52773/terminal/) or even [Global Explorer](http://localhost:52773/csp/sys/exp/UtilExpGlobalView.csp?$ID2=try.PointD&$NAMESPACE=USER&$NAMESPACE=USER)
 
 ```objectscript
-zwrite ^try.PointD
-try.PointD(1)=$lb("",1,2)
+zwrite ^game.PlayerD
+^game.PlayerD=1
+^game.PlayerD(1)=$lb("","My Player","kraken",1377)
 ```
 
-The expected structure %%CLASSNAME, X, Y is set with `$lb("",1,2)` which corresponds to X and Y properties of our object (%%CLASSNAME is system property, ignore it).
+The expected structure %%CLASSNAME, Name, Alias, Score is set with `$lb("","My Player","kraken")` which corresponds to X and Y properties of our object (%%CLASSNAME is system property, ignore it).
 
 Of course, you can also add a row via SQL:
 
 ```sql
-INSERT INTO try.Point (X, Y) VALUES (3,4)
+INSERT INTO game.Player (Name, Alias, Score) VALUES ('Other player','ppp', 1100)
 ```
 
 The global will look like this:
 
 ```objectscript
-zw ^try.PointD
-^try.PointD=2
-^try.PointD(1)=$lb("",1,2)
-^try.PointD(2)=$lb("",3,4)
+zwrite ^game.PlayerD
+^game.PlayerD=2
+^game.PlayerD(1)=$lb("","My Player","kraken",1377)
+^game.PlayerD(2)=$lb("","Other player","ppp",1100)
+```
+
+You can even open the new player you have just created:
+```objectscript
+set p2 = ##class(game.Player).%OpenId(2)
+zwrite p2
 ```
 
 Let's delete all the data from the table:
 
 ```sql
-DELETE FROM try.Point
+DELETE FROM game.Player
 ```
 
 Our global will look like this:
-```
-zw ^try.PointD
-^try.PointD=2
+```objectscript
+zwrite ^game.PlayerD
+^game.PlayerD=2
 ```
 
 Only ID counter is left, so a new object/row would have an ID=3. Also our class and table continue to exist.
@@ -160,16 +173,16 @@ Only ID counter is left, so a new object/row would have an ID=3. Also our class 
 But, what happens when we run:
 
 ```sql
-DROP TABLE try.Point
+DROP TABLE game.Player
 ```
 
 It will destroy the table, the class and delete the global:
 
 ```objectscript
-zw ^try.PointD
+zw ^game.PlayerD
 ```
 
-## Some other example
+## Importing and exporting to JSON / XML
 
 Now have a look at the class [sample.Person](src/sample/Person.cls) class. Can you still find the properties and the storage definition?
 
@@ -178,3 +191,24 @@ Try executing the included sample method by:
 ```objectscript
 do ##class(sample.Person).RunSample()
 ```
+
+Check out `%JSONREFERENCE` and some other options in [Using the JSON Adaptor](https://docs.intersystems.com/iris20242/csp/docbook/DocBook.UI.Page.cls?KEY=GJSON_adaptor)
+
+Try the following:
+
+After running the sample, you can create a new person:
+```objectscript
+set json = {"Name":"Other","last":"Person","BirthDate":"1983-11-03","Company":"1"}
+set person = ##class(sample.Person).%JSONNew()
+write person.%JSONImport(json)
+write person.%Save()
+```
+
+Try also to create a person but using a non-existent company:
+```objectscript
+set json = {"Name":"Marc","last":"MMM","BirthDate":"1993-08-03","Company":"7"}
+set person = ##class(sample.Person).%JSONNew()
+write person.%JSONImport(json)
+do $system.Status.DisplayError(%objlasterror)
+```
+
